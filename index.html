@@ -778,15 +778,16 @@ function renderDevisSection(){
 
   if(state.devis.lignes.length){
     c.append(el('div',{class:'devis-cols'},
-      el('span',{class:'c-desc'},'N\u00b0'), el('span',{class:'c-qty'},'Qt\u00e9'),
+      el('span',{class:'c-desc'},'Code'), el('span',{class:'c-qty'},'Qt\u00e9'),
       el('span',{class:'c-mt'},'Montant'), el('span',{class:'c-del'},'')
     ));
   }
+  const refCode = (i)=> 'Refact' + String(i+1).padStart(2,'0');
   state.devis.lignes.forEach((l, idx)=>{
     const mt = el('span',{class:'d-mt'});
     const updMt = ()=>{ mt.textContent = ((parseFloat(l.qty)||0)*(parseFloat(l.pu)||0)).toFixed(2); };
     const row = el('div',{class:'devis-row'},
-      el('span',{class:'d-desc'}, String(idx+1)),
+      el('span',{class:'d-desc', style:'font-weight:700;'}, refCode(idx)),
       el('input',{class:'d-qty', type:'number', step:'any', min:'0', value:l.qty, oninput:(e)=>{ l.qty=e.target.value; updMt(); updTotal(); }}),
       mt,
       el('button',{class:'d-del', onclick:()=>{ state.devis.lignes.splice(idx,1); renderAll(); }},'\u2715')
@@ -794,6 +795,14 @@ function renderDevisSection(){
     updMt();
     c.append(row);
   });
+
+  if(state.devis.lignes.length){
+    const leg = el('div',{style:'font-size:11px;color:var(--sub);line-height:1.7;margin:8px 2px 2px;border-top:1px dashed var(--line);padding-top:8px;'});
+    state.devis.lignes.forEach((l, idx)=>{
+      leg.append(el('div',{}, refCode(idx)+' \u2014 '+(l.desc||'\u2014')));
+    });
+    c.append(leg);
+  }
 
   const tot = el('div',{class:'devis-total'}, 'Total HT : ', totalSpan);
   updTotal();

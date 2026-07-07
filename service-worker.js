@@ -1,6 +1,6 @@
 // Service worker Loxcheck Parc — stratégie network-first (comme Loxcheck v22)
 // ⚠️ Nom de cache distinct de l'appli principale pour éviter tout conflit.
-const CACHE = 'loxcheck-parc-v1';
+const CACHE = 'loxcheck-parc-v2';
 const ASSETS = [
   './',
   './index.html',
