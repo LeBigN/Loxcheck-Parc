@@ -1,6 +1,7 @@
-// Service worker Loxcheck Parc — stratégie network-first (comme Loxcheck v22)
-// ⚠️ Nom de cache distinct de l'appli principale pour éviter tout conflit.
-const CACHE = 'loxcheck-parc-v2';
+// Service worker Loxcheck Parc — accès hors ligne complet
+// Stratégie : réseau prioritaire avec délai de garde court, repli immédiat sur
+// la copie locale (pré-téléchargée à l'installation) si le réseau est lent ou absent.
+const CACHE = 'loxcheck-parc-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -9,7 +10,9 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
+const NETWORK_TIMEOUT = 3500; // ms — au-delà, on sert la version locale
 
+// Installation : téléchargement complet de l'application pour le hors ligne
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
@@ -22,14 +25,25 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Network-first : on sert la dernière version en ligne, le cache prend le relais hors connexion
+function fetchWithTimeout(req){
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), NETWORK_TIMEOUT);
+    fetch(req).then(res => { clearTimeout(timer); resolve(res); },
+                    err => { clearTimeout(timer); reject(err); });
+  });
+}
+
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    fetch(e.request).then(res => {
+    fetchWithTimeout(e.request).then(res => {
+      // Réseau OK : on sert la version fraîche et on met la copie locale à jour
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy)).catch(()=>{});
       return res;
-    }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
+    }).catch(() =>
+      // Réseau lent ou absent : copie locale, avec index.html en secours de navigation
+      caches.match(e.request).then(r => r || (e.request.mode === 'navigate' ? caches.match('./index.html') : Response.error()))
+    )
   );
 });

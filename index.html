@@ -1270,8 +1270,28 @@ document.getElementById('devisBtn').addEventListener('click', async ()=>{
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    navigator.serviceWorker.register('service-worker.js').then(reg => {
+      // Première installation : confirme que l'appli est téléchargée pour le hors ligne
+      if (reg.installing) {
+        reg.installing.addEventListener('statechange', function(){
+          if (this.state === 'activated') showToast('✓ Application téléchargée — utilisable hors ligne');
+        });
+      }
+      // Mise à jour publiée sur GitHub : téléchargée en arrière-plan
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            showToast('Mise à jour téléchargée — fermer et rouvrir l\'appli pour l\'appliquer');
+          }
+        });
+      });
+    }).catch(()=>{});
   });
+  // Indicateur de connexion : la fiche reste enregistrée sur l'appareil dans tous les cas
+  window.addEventListener('offline', ()=> showToast('Mode hors ligne — la fiche reste enregistrée sur l\'appareil'));
+  window.addEventListener('online',  ()=> showToast('Connexion rétablie'));
 }
 </script>
 </body>
