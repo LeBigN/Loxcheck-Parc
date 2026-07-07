@@ -1,0 +1,15 @@
+{
+  "name": "Loxcheck Parc — Fiche retour modules",
+  "short_name": "Loxcheck Parc",
+  "description": "Fiche retour module parc — LOXAM Module Agence 9112",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F6F8",
+  "theme_color": "#C8102E",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
