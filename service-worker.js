@@ -1,14 +1,16 @@
 // Service worker Loxcheck Parc — accès hors ligne complet
 // Stratégie : réseau prioritaire avec délai de garde court, repli immédiat sur
 // la copie locale (pré-téléchargée à l'installation) si le réseau est lent ou absent.
-const CACHE = 'loxcheck-parc-v5';
+const CACHE = 'loxcheck-parc-v6';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './vendor/jspdf.umd.min.js',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './icons/icon-192-maskable.png',
+  './icons/icon-512-maskable.png'
 ];
 const NETWORK_TIMEOUT = 3500; // ms — au-delà, on sert la version locale
 
