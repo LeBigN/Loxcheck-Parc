@@ -1201,19 +1201,6 @@ async function generatePDF(){
   if(dd) doc.text(dd, M+44, y+headH+bodyH-11);
   y += headH + bodyH + 18;
 
-  // Encadré SAV (repris de la maquette)
-  const savTxt = "Pour toute demande de SAV ou d'intervention, merci de bien vouloir contacter l'agence au 04 42 46 72 80 ou par e-mail \u00e0 l'adresse suivante : accueilmarseille@loxam-module.com";
-  doc.setFont('helvetica','bolditalic'); doc.setFontSize(8.6);
-  const savLines = doc.splitTextToSize(savTxt, CW-48);
-  const savH = savLines.length*11.5 + 16;
-  if(y + savH > MAXY) y = newPage();
-  setFill(SAVBG); setDraw(SAVBORDER); doc.setLineWidth(1.1);
-  doc.roundedRect(M, y, CW, savH, 8, 8, 'FD');
-  setText(RED);
-  savLines.forEach((ln,i)=> doc.text(ln, W/2, y+15+i*11.5, {align:'center'}));
-  setText(INK);
-  y += savH;
-
   // Annexe photos (n° de module, lignes, casse)
   const annex = [];
   (state.photosModule || []).forEach(p=> annex.push(['N\u00b0 du module', p]));
