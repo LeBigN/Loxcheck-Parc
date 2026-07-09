@@ -1,7 +1,7 @@
 // Service worker Loxcheck Parc — accès hors ligne complet
 // Stratégie : réseau prioritaire avec délai de garde court, repli immédiat sur
 // la copie locale (pré-téléchargée à l'installation) si le réseau est lent ou absent.
-const CACHE = 'loxcheck-parc-v7';
+const CACHE = 'loxcheck-parc-v9';
 const ASSETS = [
   './',
   './index.html',
