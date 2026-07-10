@@ -866,7 +866,10 @@ async function generateDevisPDF(){
   const frDate = state.devis.date ? state.devis.date.split('-').reverse().join('/') : new Date().toLocaleDateString('fr-FR');
   const tX=M, tY=196, cw=92, rh=24;
   setFill(RED);
-  doc.rect(tX, tY, cw, rh, 'F'); doc.rect(tX+cw, tY, cw, rh, 'F');
+  doc.roundedRect(tX, tY, 2*cw, rh, 6, 6, 'F');
+  // séparateur blanc entre Numéro et Date
+  doc.setDrawColor(255,255,255); doc.setLineWidth(1.2);
+  doc.line(tX+cw, tY+4, tX+cw, tY+rh-4);
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
   doc.text('Num\u00e9ro', tX+cw/2, tY+16, {align:'center'});
   doc.text('Date', tX+cw+cw/2, tY+16, {align:'center'});
@@ -884,7 +887,7 @@ async function generateDevisPDF(){
   setFill(LIGHT); setDraw([225,225,225]); doc.setLineWidth(0.9);
   doc.roundedRect(bx, tY, bw, bh, 6, 6, 'FD');
   setText(RED);
-  doc.text('Descriptif des travaux:', bx+9, tY+15);
+  doc.text('Descriptif:', bx+9, tY+15);
   setText(INK); doc.setFont('helvetica','normal'); doc.setFontSize(9);
   if(descLines.length) doc.text(descLines, bx+9, tY+28);
 
@@ -895,8 +898,7 @@ async function generateDevisPDF(){
   const xDesc=M, xQty=M+wDesc, xPu=xQty+wQty, xMt=xPu+wPu, xEnd=W-M;
   const headH=24;
   setFill(RED);
-  doc.rect(xDesc, y, wDesc, headH, 'F'); doc.rect(xQty, y, wQty, headH, 'F');
-  doc.rect(xPu, y, wPu, headH, 'F'); doc.rect(xMt, y, wMt, headH, 'F');
+  doc.roundedRect(xDesc, y, xEnd-xDesc, headH, 6, 6, 'F');
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(10);
   // séparateurs blancs entre colonnes d'en-tête
   doc.setDrawColor(255,255,255); doc.setLineWidth(1.2);
@@ -925,17 +927,27 @@ async function generateDevisPDF(){
     y += rowH;
   });
 
-  // Grand cadre du tableau + colonnes prolongées jusqu'en bas (comme la maquette)
+  // Cadre du corps du tableau uniquement (sous le bandeau rouge arrondi),
+  // colonnes prolongées jusqu'en bas — le bandeau d'en-tête reste dégagé.
+  const bodyTop = tableTop + headH;
   const boxBottom = Math.max(y, 640);
   setDraw([210,210,210]); doc.setLineWidth(0.9);
-  doc.rect(xDesc, tableTop, xEnd-xDesc, boxBottom-tableTop);
-  [xQty,xPu,xMt].forEach(x=> doc.line(x, tableTop, x, boxBottom));
+  doc.rect(xDesc, bodyTop, xEnd-xDesc, boxBottom-bodyTop);
+  [xQty,xPu,xMt].forEach(x=> doc.line(x, bodyTop, x, boxBottom));
   y = boxBottom;
 
-  // Formule de politesse + bloc signature conducteur (SCOTTO)
+  // Formule de politesse (gauche) + bloc signature agent de parc (droite)
   setText(INK); doc.setFont('helvetica','normal'); doc.setFontSize(9);
   const polit = doc.splitTextToSize("Restant \u00e0 votre disposition pour tous renseignements compl\u00e9mentaires, veuillez agr\u00e9er, l'expression de nos salutations respectueuses.", 300);
   doc.text(polit, M, y+26);
+
+  // (Aucun signataire sur le devis : il est transmis par l'accueil de l'agence.)
+
+  // Bloc contact en bas à gauche (agence)
+  setText(INK); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text('LOXAM Module PACA', M, y+96);
+  doc.text('04 42 46 72 80', M, y+108);
+  doc.text('accueilmarseille@loxam-module.com', M, y+120);
 
   // Total HT — barre rouge + montant
   const totY = Math.min(y + 96, 792);
