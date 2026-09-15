@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Loxcheck Parc — Fiche retour module</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#C8102E">
@@ -54,26 +54,33 @@ if (!window.storage) {
   --sans-reserve:#8891A0;
   --gold:#E8A812;
 }
-*{box-sizing:border-box;}
+*, *::before, *::after{ box-sizing:border-box; }
+html{ margin:0; padding:0; width:100%; max-width:100%; background:var(--paper); overflow-x:hidden; }
 body{
-  margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   background:var(--paper); color:var(--ink); -webkit-tap-highlight-color:transparent;
+  min-height:100vh; min-height:100dvh;
+  width:100%; max-width:100%; overflow-x:hidden;
 }
 /* Uniform font across every text element and form control */
 input, textarea, select, button, label, p, h1, h2, h3, div, span {
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 header{
+  padding-top:env(safe-area-inset-top);
   position:sticky; top:0; z-index:50; background:var(--card);
   box-shadow:0 2px 8px rgba(0,0,0,.12);
+  width:100%; box-sizing:border-box; margin:0;
 }
 .topbar{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:10px 14px; border-bottom:1px solid var(--line);
+  padding:10px calc(14px + env(safe-area-inset-right)) 10px calc(14px + env(safe-area-inset-left));
+  border-bottom:1px solid var(--line);
 }
 .topbar img{height:34px; display:block;}
 .topbar .agence{font-size:9.5px; color:var(--sub); font-weight:700; letter-spacing:.3px; margin-top:2px;}
-.topbar .title{font-size:13.5px; font-weight:800; color:var(--red); text-align:right; letter-spacing:.2px;}
+.topbar .title{font-size:13.5px; font-weight:800; color:var(--red); text-align:right; letter-spacing:.2px; line-height:1.15;}
+@media (max-width:400px){ .topbar .title{font-size:12px;} .topbar img{height:30px;} }
 .accent-strip{
   background:var(--red); height:20px; margin-top:8px;
   box-shadow:0 2px 5px rgba(200,16,46,.25);
@@ -82,7 +89,7 @@ header{
 .progress-track{height:4px; background:#EEE; border-radius:2px; overflow:hidden;}
 .progress-fill{height:100%; background:var(--gold); width:0%; transition:width .25s;}
 
-main{padding:14px 12px 130px; max-width:680px; margin:0 auto;}
+main{padding:14px calc(12px + env(safe-area-inset-right)) calc(130px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left)); max-width:680px; margin:0 auto; width:100%;}
 section.card{
   background:var(--card); border:1px solid var(--line); border-radius:14px;
   padding:14px; margin-bottom:14px;
@@ -232,7 +239,7 @@ footer.legal-footer{
 .btn-lbl{display:inline-flex;align-items:center;gap:6px;}
 .sticky-footer{
   position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--line);
-  padding:10px 12px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:8px; z-index:60;
+  padding:10px calc(12px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left)); display:flex; gap:8px; z-index:60;
   box-shadow:0 -2px 10px rgba(0,0,0,.06);
 }
 .btn{
@@ -273,10 +280,13 @@ footer.legal-footer{
 /* Écran d'accueil : choix Départ / Retour */
 .home-overlay{position:fixed; inset:0; z-index:120; background:var(--paper);
   display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-  padding:0 20px 40px; overflow-y:auto;}
+  overflow-y:auto; overflow-x:hidden;}
 .home-head{width:100%; background:var(--card); box-shadow:0 2px 8px rgba(0,0,0,.12);
-  padding:16px 14px 0; margin:0 -20px 0; text-align:center;}
+  padding:calc(16px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) 0 calc(14px + env(safe-area-inset-left));
+  text-align:center; box-sizing:border-box;}
+.home-overlay{padding-bottom:calc(40px + env(safe-area-inset-bottom)); padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right);}
 .home-head img{height:44px;}
+.home-inner{padding:0 20px;}
 .home-strip{background:var(--red); height:16px; margin-top:12px; box-shadow:0 2px 5px rgba(200,16,46,.25);}
 .home-inner{max-width:520px; width:100%; margin-top:40px;}
 .home-title{font-size:20px; font-weight:800; color:var(--ink); text-align:center; margin:0 0 6px;}
@@ -299,6 +309,16 @@ footer.legal-footer{
 .home-btn svg{width:24px; height:24px;}
 .topbar-left{display:flex; align-items:center; gap:2px;}
 
+
+/* ---- Anti-bandes-blanches mobile ----
+   html/body couvrent toute la largeur physique de l'écran (aucune marge, aucun
+   débordement). header/topbar/sticky-footer/home-head héritent de cette largeur
+   pleine et gèrent eux-mêmes l'empiètement des encoches via un padding — jamais
+   de marge négative, seule source des bandes blanches observées. ---- */
+html, body{ margin:0; padding:0; width:100%; background:var(--paper); }
+header, .sticky-footer, .home-head{ background-color:var(--card); width:100%; }
+.home-overlay{ background-color:var(--paper); width:100%; }
+
 </style>
 </head>
 <body>
@@ -320,7 +340,8 @@ const ICONS = {
   spinner: '<path d="M21 12a9 9 0 1 1-6.2-8.5"/>',
   pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
   depart: '<path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"/><path d="M3 12h12"/><path d="M11 8l4 4-4 4"/>',
-  retour: '<path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5"/><path d="M21 12H9"/><path d="M13 8l-4 4 4 4"/>'
+  retour: '<path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5"/><path d="M21 12H9"/><path d="M13 8l-4 4 4 4"/>',
+  plus: '<path d="M12 5v14"/><path d="M5 12h14"/>'
 };
 function ICON(name, size){
   const s = size || 18;
@@ -340,7 +361,7 @@ function ICON(name, size){
       <div class="home-card" id="btnDepart">
         <div class="home-ico" id="homeIcoDepart"></div>
         <div class="home-lbl">Départ</div>
-        <div class="home-desc">Contrôle avant mise à disposition du module</div>
+        <div class="home-desc">Contrôle avant départ du module</div>
       </div>
       <div class="home-card" id="btnRetour">
         <div class="home-ico" id="homeIcoRetour"></div>
@@ -393,11 +414,18 @@ function ICON(name, size){
 const SMILEY_OK = '<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="19" stroke="currentColor" stroke-width="3.2"/><circle cx="17" cy="19" r="2.7" fill="currentColor"/><circle cx="31" cy="19" r="2.7" fill="currentColor"/><path d="M15.5 29c2.4 3.6 5.6 5.2 8.5 5.2s6.1-1.6 8.5-5.2" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>';
 const SMILEY_NOK = '<svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="19" stroke="currentColor" stroke-width="3.2"/><circle cx="17" cy="19" r="2.7" fill="currentColor"/><circle cx="31" cy="19" r="2.7" fill="currentColor"/><path d="M15.5 34c2.4-3.6 5.6-5.2 8.5-5.2s6.1 1.6 8.5 5.2" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>';
 
-// Toutes les lignes (chapitres 1, 2 et mobilier) : smiley vert / smiley rouge
+// RETOUR : smileys Conforme (vert) / Non conforme (rouge) sur toutes les lignes.
 const CHECK_OPTS = [
   {v:'ok', svg:SMILEY_OK},
   {v:'nok', svg:SMILEY_NOK}
 ];
+// DÉPART (auto-contrôle) : système neutre Neuf / Occasion (les photos font preuve).
+const STATUS_OPTS = [
+  {v:'neuf', l:'Neuf'},
+  {v:'occasion', l:'Occasion'}
+];
+// Options actives selon le mode courant.
+function statusOpts(){ return mode==='depart' ? STATUS_OPTS : CHECK_OPTS; }
 
 // Agents de parc de l'agence 9112
 const AGENTS_PARC = ['Gérald BAFARO','Christophe HAZART','Emanuele BONSIGNORE'];
@@ -468,7 +496,7 @@ const MODE_LABELS = {
     titrePdf:'FICHE DÉPART MODULES PARC',
     typeLigne:'Départ de module unitaire du parc',
     sectionTitre:'Départ de module du parc',
-    sectionHint:'Contrôle du module unitaire avant mise à disposition',
+    sectionHint:'Contrôle avant départ du module',
     boutonFiche:'Fiche Départ',
     toastFiche:'Fiche départ générée',
     fichierPdf:'Fiche Départ LOXAM Module',
@@ -494,7 +522,7 @@ const state = {
   checklist:{},
   cles:{ remises:'', rendues:'' },
   mobilier:{},
-  casse:{ constat:'none', lignes:['','',''], photos:[] },
+  casse:{ constat:'none', lignes:['','',''], photos:[], items:[] }, // items: [{desc, photos:[]}] — une dégradation distincte par item
   devis:{ date:'', descriptif:'', lignes:[] }, // lignes: {desc, qty, pu} — refacturation HT
   signatures:{
     agent:{ nom:'', date:'', sig:'' }
@@ -536,6 +564,15 @@ async function loadDraft(){
       Object.assign(state.cles, loaded.cles||{});
       Object.assign(state.mobilier, loaded.mobilier||{});
       Object.assign(state.casse, loaded.casse||{});
+      if(!Array.isArray(state.casse.items)) state.casse.items = [];
+      // Migration ascendante : ancien format (lignes + photos globales) → items distincts
+      if(state.casse.items.length===0 && Array.isArray(state.casse.lignes)){
+        const anciennes = state.casse.lignes.filter(t=> String(t||'').trim());
+        if(anciennes.length){
+          state.casse.items = anciennes.map((t,i)=> ({desc:t, photos: (i===0 && Array.isArray(state.casse.photos))? state.casse.photos.slice() : [] }));
+        }
+      }
+      state.casse.items.forEach(it=>{ if(!Array.isArray(it.photos)) it.photos=[]; if(typeof it.desc!=='string') it.desc=''; });
       Object.assign(state.signatures, loaded.signatures||{});
       if(loaded.devis){ Object.assign(state.devis, loaded.devis); }
       if(!Array.isArray(state.devis.lignes)) state.devis.lignes = [];
@@ -649,13 +686,14 @@ function renderChecklistItem(key, storeObj, showQty){
     extras.style.display = (!showQty || (it.statuses && it.statuses.length)) ? '' : 'none';
   };
 
+  const opts = statusOpts();
   const row = el('div',{class:'radio-row'});
-  CHECK_OPTS.forEach(o=>{
+  opts.forEach(o=>{
     const id = 'ck-'+(_ckId++);
     const input = el('input',{type:'checkbox', id:id, ...(it.statuses.includes(o.v)?{checked:'checked'}:{})});
     input.addEventListener('change', ()=>{
       if(input.checked){
-        // Exclusivité : Conforme OU Non conforme
+        // Exclusivité : un seul statut à la fois
         it.statuses = [o.v];
         row.querySelectorAll('input').forEach(inp=>{ if(inp!==input) inp.checked = false; });
       } else {
@@ -665,10 +703,12 @@ function renderChecklistItem(key, storeObj, showQty){
       updateProgress();
     });
     const lab = el('label',{class:'st-'+o.v, for:id});
-    lab.innerHTML = o.svg;
+    if(o.svg) lab.innerHTML = o.svg; else lab.textContent = o.l;
     row.append(input, lab);
   });
   w.append(row);
+  // Saut de ligne entre les indicateurs d'état et la gestion des quantités/photos
+  if(showQty) w.append(el('div',{style:'height:10px;'}));
   w.append(extras);
   syncExtras();
   return w;
@@ -770,16 +810,35 @@ function renderCasseSection(){
   [['none','Aucune casse / dommage constaté'],['some','Casse / dommage constaté (détail ci-dessous)']].forEach(([v,l])=>{
     const id='casse-'+v;
     const input = el('input',{type:'radio', name:'casse', id, ...(state.casse.constat===v?{checked:'checked'}:{})});
-    input.addEventListener('change', ()=>{ state.casse.constat=v; renderAll(); });
+    input.addEventListener('change', ()=>{
+      state.casse.constat=v;
+      // Au premier passage en "casse constatée", on crée une ligne vide prête à remplir
+      if(v==='some' && state.casse.items.length===0) state.casse.items.push({desc:'', photos:[]});
+      renderAll();
+    });
     row.append(input, el('label',{class:'pv-generic', for:id}, l));
   });
   c.append(row);
   if(state.casse.constat==='some'){
-    const ta = el('textarea',{placeholder:'— Détail des dommages constatés…'});
-    ta.value = state.casse.lignes.join('\n');
-    ta.addEventListener('input',(e)=>{ state.casse.lignes = e.target.value.split('\n'); });
-    c.append(el('div',{class:'free-lines', style:'margin-top:10px;'}, ta));
-    c.append(photoRow(()=>state.casse.photos, (src)=>state.casse.photos.push(src), (idx)=>state.casse.photos.splice(idx,1)));
+    // Chaque dégradation est une ligne distincte avec son propre champ texte et ses photos
+    state.casse.items.forEach((item, idx)=>{
+      const blk = el('div',{class:'item', style:'padding:10px 0;'});
+      const head = el('div',{style:'display:flex; align-items:center; gap:8px; margin-bottom:8px;'});
+      head.append(el('div',{class:'item-title', style:'flex:1;'}, 'Dégradation '+(idx+1)));
+      const del = el('button',{class:'d-del', onclick:()=>{ state.casse.items.splice(idx,1); if(state.casse.items.length===0) state.casse.items.push({desc:'',photos:[]}); renderAll(); }});
+      del.innerHTML = ICON('x',13);
+      head.append(del);
+      blk.append(head);
+      const inp = el('input',{type:'text', class:'item-obs-input', placeholder:'Décrire la dégradation…', value:item.desc,
+        style:'width:100%; border:1px solid var(--line); border-radius:8px; padding:9px 11px; font-size:14px;',
+        oninput:(e)=> item.desc=e.target.value});
+      blk.append(inp);
+      blk.append(photoRow(()=>item.photos, (src)=>item.photos.push(src), (i)=>item.photos.splice(i,1)));
+      c.append(blk);
+    });
+    const addBtn = el('button',{class:'mini-btn red', style:'margin-top:6px;', onclick:()=>{ state.casse.items.push({desc:'',photos:[]}); renderAll(); }});
+    addBtn.innerHTML = ICON('plus',15)+' Ajouter une dégradation';
+    c.append(addBtn);
   }
   return c;
 }
@@ -856,9 +915,20 @@ function renderAll(){
   main.append(renderInfoSection());
   CHECKLIST_SECTIONS.forEach(def => main.append(renderChecklistSection(def)));
   main.append(renderClesSection());
-  main.append(renderCasseSection());
+  // Chapitre 4 (Casse) et 6 (Refacturation) : réservés au mode Retour
+  if(mode==='retour'){
+    main.append(renderCasseSection());
+  }
   main.append(renderSignaturesSection());
-  main.append(renderDevisSection());
+  // Refacturation : uniquement en Retour ET seulement si une casse est constatée
+  if(mode==='retour' && state.casse.constat==='some'){
+    main.append(renderDevisSection());
+  }
+  // Boutons du footer selon le mode : en Départ, ni disquette ni Fiche Devis
+  const saveBtn = document.getElementById('saveBtn');
+  const devisBtn = document.getElementById('devisBtn');
+  if(saveBtn) saveBtn.style.display = (mode==='depart') ? 'none' : '';
+  if(devisBtn) devisBtn.style.display = (mode==='depart') ? 'none' : '';
   main.append(el('footer',{class:'legal-footer'},
     'LOXAM MODULE – S.A.S.U. CAPITAL DE 487 500 € - SIÈGE SOCIAL : 276, RUE NICOLAS COATANLEM – 56850 CAUDAN – R.C.S. LORIENT B 433 911 948 – N° T.V.A : FR27 433 911 948 – NAF 7732Z'
   ));
@@ -1272,22 +1342,35 @@ async function generatePDF(){
   valueField(M+fw+22, y, fw, 'Agent de parc', state.meta.agent);
   y += 44;
 
-  // Chapitres 1 & 2 (smileys)
-  const colsSmiley = [ {w:CW-132, t:'\u00c9l\u00e9ment'}, {w:66, smiley:true, k:0}, {w:66, smiley:false, k:1} ];
-  const stKeys = ['ok','nok'];
+  // Chapitres 1 & 2 — colonnes selon le mode :
+  //   Retour : smileys Conforme / Non conforme   |   Départ : texte Neuf / Occasion
+  const stKeys = (mode==='depart') ? ['neuf','occasion'] : ['ok','nok'];
+  const colsSmiley = (mode==='depart')
+    ? [ {w:CW-132, t:'\u00c9l\u00e9ment'}, {w:66, t:'NEUF', k:0}, {w:66, t:'OCCASION', k:1} ]
+    : [ {w:CW-132, t:'\u00c9l\u00e9ment'}, {w:66, smiley:true, k:0}, {w:66, smiley:false, k:1} ];
+  // Seules les lignes effectivement cochées sont imprimées (masquage des non renseignées).
   function rowsFor(sec){
-    return sec.items.map(i=>{
-      const it = state.checklist[sec.id+'|'+i] || {statuses:[]};
+    return sec.items.filter(i=>{
+      const it = state.checklist[sec.id+'|'+i];
+      return it && Array.isArray(it.statuses) && it.statuses.length > 0;
+    }).map(i=>{
+      const it = state.checklist[sec.id+'|'+i];
       return { name:i, checks: stKeys.map(k=> (it.statuses||[]).includes(k)) };
     });
   }
-  y = pill('1. Propret\u00e9 des modules', y);
-  y = statusTable(y, colsSmiley, rowsFor(CHECKLIST_SECTIONS[0]));
-  y += 8;
-  if(y + 90 > MAXY) y = newPage();
-  y = pill('2. \u00c9tat des panneaux et structure', y);
-  y = statusTable(y, colsSmiley, rowsFor(CHECKLIST_SECTIONS[1]));
-  y += 8;
+  const rows1 = rowsFor(CHECKLIST_SECTIONS[0]);
+  if(rows1.length){
+    y = pill('1. Propret\u00e9 des modules', y);
+    y = statusTable(y, colsSmiley, rows1);
+    y += 8;
+  }
+  const rows2 = rowsFor(CHECKLIST_SECTIONS[1]);
+  if(rows2.length){
+    if(y + 90 > MAXY) y = newPage();
+    y = pill('2. \u00c9tat des panneaux et structure', y);
+    y = statusTable(y, colsSmiley, rows2);
+    y += 8;
+  }
 
   // 3. Clés et mobilier
   if(y + 120 > MAXY) y = newPage();
@@ -1304,8 +1387,9 @@ async function generatePDF(){
   if(state.cles.rendues) doc.text(String(state.cles.rendues), M+394, y);
   dotted(M+388, y+3, 100);
   y += 18;
-  const colsMob = [ {w:CW-192, t:'Mobilier / accessoire'}, {w:60, t:'QUANTIT\u00c9', isQty:true},
-                    {w:66, smiley:true, k:0}, {w:66, smiley:false, k:1} ];
+  const colsMob = (mode==='depart')
+    ? [ {w:CW-192, t:'Mobilier / accessoire'}, {w:60, t:'QUANTIT\u00c9', isQty:true}, {w:66, t:'NEUF', k:0}, {w:66, t:'OCCASION', k:1} ]
+    : [ {w:CW-192, t:'Mobilier / accessoire'}, {w:60, t:'QUANTIT\u00c9', isQty:true}, {w:66, smiley:true, k:0}, {w:66, smiley:false, k:1} ];
   // Seul le mobilier effectivement contrôlé (une case coché) est imprimé.
   const mobRows = MOBILIER_ITEMS.filter(i=>{
     const it = state.mobilier[i];
@@ -1323,7 +1407,8 @@ async function generatePDF(){
 
   // 4. Casse — imprimé uniquement si une dégradation a été constatée
   if(state.casse.constat === 'some'){
-    if(y + 110 > MAXY) y = newPage();
+    const items = (state.casse.items || []).filter(it=> String(it.desc||'').trim());
+    if(y + 90 > MAXY) y = newPage();
     y = pill('4. Casse et dommages constat\u00e9s', y);
     y += 12;
     checkbox(M, y-10, 12, false, RED);
@@ -1331,9 +1416,29 @@ async function generatePDF(){
     doc.text('Aucune casse / dommage constat\u00e9', M+19, y);
     checkbox(M+250, y-10, 12, true, RED);
     doc.text('Casse / dommage constat\u00e9 (d\u00e9tail ci-dessous)', M+269, y);
-    y += 26;
-    (state.casse.lignes || []).filter(t=> String(t||'').trim()).forEach(t=> lineGroup(t));
-    y += 2;
+    y += 20;
+    // Encadré rouge distinctif mettant en évidence les réserves (style Loxcheck)
+    if(items.length){
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+      const lignes = [];
+      items.forEach((it, i)=>{
+        const parts = doc.splitTextToSize((i+1)+'.  '+String(it.desc).trim(), CW-28);
+        parts.forEach(p=> lignes.push(p));
+      });
+      const boxH = lignes.length*13 + 26;
+      if(y + boxH > MAXY) y = newPage();
+      setFill([253,236,238]); setDraw(RED); doc.setLineWidth(1.3);
+      doc.roundedRect(M, y, CW, boxH, 8, 8, 'FD');
+      // liseré rouge épais à gauche pour marquer la réserve
+      setFill(RED);
+      doc.rect(M, y, 4.5, boxH, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.4); setText(RED);
+      doc.text('R\u00c9SERVES \u00c9MISES', M+16, y+14);
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); setText([120,20,30]);
+      lignes.forEach((ln, i)=> doc.text(ln, M+16, y+27+i*13));
+      setText(INK);
+      y += boxH + 8;
+    }
   }
 
   // 5. Signature de l'agent de parc
@@ -1369,7 +1474,10 @@ async function generatePDF(){
     const it = state.mobilier[i];
     ((it && it.photos) || []).forEach(p=> annex.push([i, p]));
   });
-  (state.casse.photos || []).forEach(p=> annex.push(['Casse / dommages', p]));
+  (state.casse.items || []).forEach((it, i)=>{
+    const lbl = 'Dégradation '+(i+1)+(String(it.desc||'').trim()? ' — '+String(it.desc).trim() : '');
+    (it.photos || []).forEach(p=> annex.push([lbl, p]));
+  });
   if(annex.length){
     y = newPage();
     y = pill('Annexe photos', y);
