@@ -701,6 +701,7 @@ function renderChecklistItem(key, storeObj, showQty){
       }
       syncExtras();
       updateProgress();
+      updateDevisButtonVisibility();
     });
     const lab = el('label',{class:'st-'+o.v, for:id});
     if(o.svg) lab.innerHTML = o.svg; else lab.textContent = o.l;
@@ -788,16 +789,23 @@ function renderChecklistSection(def){
 function renderClesSection(){
   const c = el('section',{class:'card', id:'sec-cles'});
   c.append(el('h2','3. Clés et mobilier'));
+  // Départ (auto-contrôle avant mise à disposition) : une seule information à saisir,
+  // le nombre de clés remises avec le module. Retour : les deux compteurs (attendues/rendues).
+  const keysGrid = (mode==='depart')
+    ? el('div',{class:'keys-grid', style:'grid-template-columns:1fr;'},
+        el('div',{},
+          el('label','Nombre de clés'),
+          el('input',{type:'number', min:'0', placeholder:'0', value:state.cles.remises, oninput:(e)=>state.cles.remises=e.target.value})))
+    : el('div',{class:'keys-grid'},
+        el('div',{},
+          el('label','Nombre de clés attendues'),
+          el('input',{type:'number', min:'0', placeholder:'0', value:state.cles.remises, oninput:(e)=>state.cles.remises=e.target.value})),
+        el('div',{},
+          el('label','Nombre de clés rendues'),
+          el('input',{type:'number', min:'0', placeholder:'0', value:state.cles.rendues, oninput:(e)=>state.cles.rendues=e.target.value})));
   c.append(el('div',{class:'keys-box'},
     (()=>{ const t=el('div',{class:'keys-title'}); t.innerHTML=ICON('key',15)+' Clés'; return t; })(),
-    el('div',{class:'keys-grid'},
-      el('div',{},
-        el('label','Nombre de clés attendues'),
-        el('input',{type:'number', min:'0', placeholder:'0', value:state.cles.remises, oninput:(e)=>state.cles.remises=e.target.value})),
-      el('div',{},
-        el('label','Nombre de clés rendues'),
-        el('input',{type:'number', min:'0', placeholder:'0', value:state.cles.rendues, oninput:(e)=>state.cles.rendues=e.target.value}))
-    )
+    keysGrid
   ));
   MOBILIER_ITEMS.forEach(i => c.append(renderChecklistItem(i, state.mobilier, true)));
   return c;
@@ -908,6 +916,19 @@ function renderSignaturesSection(){
   return c;
 }
 
+// Départ (auto-contrôle) : pas de chapitre Casse dédié — le statut "Occasion"
+// posé sur une ligne (checklist ou mobilier) fait office de signalement de
+// dommage/usure, et déclenche l'apparition du bouton Fiche Devis.
+function hasOccasionFlag(){
+  return Object.values(state.checklist).some(it=> (it.statuses||[]).includes('occasion'))
+      || Object.values(state.mobilier).some(it=> (it.statuses||[]).includes('occasion'));
+}
+function updateDevisButtonVisibility(){
+  const devisBtn = document.getElementById('devisBtn');
+  if(!devisBtn) return;
+  devisBtn.style.display = (mode==='depart') ? (hasOccasionFlag() ? '' : 'none') : '';
+}
+
 function renderAll(){
   const main = document.getElementById('sections');
   const scrollY = window.scrollY;
@@ -926,9 +947,8 @@ function renderAll(){
   }
   // Boutons du footer selon le mode : en Départ, ni disquette ni Fiche Devis
   const saveBtn = document.getElementById('saveBtn');
-  const devisBtn = document.getElementById('devisBtn');
   if(saveBtn) saveBtn.style.display = (mode==='depart') ? 'none' : '';
-  if(devisBtn) devisBtn.style.display = (mode==='depart') ? 'none' : '';
+  updateDevisButtonVisibility();
   main.append(el('footer',{class:'legal-footer'},
     'LOXAM MODULE – S.A.S.U. CAPITAL DE 487 500 € - SIÈGE SOCIAL : 276, RUE NICOLAS COATANLEM – 56850 CAUDAN – R.C.S. LORIENT B 433 911 948 – N° T.V.A : FR27 433 911 948 – NAF 7732Z'
   ));
@@ -1377,15 +1397,23 @@ async function generatePDF(){
   y = pill('3. Cl\u00e9s et mobilier', y);
   y += 2;
   doc.setFont('helvetica','bold'); doc.setFontSize(9.5); setText(INK);
-  doc.text('Nombre de cl\u00e9s attendues :', M, y);
-  doc.setFont('helvetica','normal');
-  if(state.cles.remises) doc.text(String(state.cles.remises), M+134, y);
-  dotted(M+128, y+3, 100);
-  doc.setFont('helvetica','bold');
-  doc.text('Nombre de cl\u00e9s rendues :', M+270, y);
-  doc.setFont('helvetica','normal');
-  if(state.cles.rendues) doc.text(String(state.cles.rendues), M+394, y);
-  dotted(M+388, y+3, 100);
+  if(mode==='depart'){
+    // Départ : une seule information, le nombre de clés remises avec le module.
+    doc.text('Nombre de cl\u00e9s :', M, y);
+    doc.setFont('helvetica','normal');
+    if(state.cles.remises) doc.text(String(state.cles.remises), M+90, y);
+    dotted(M+84, y+3, 100);
+  } else {
+    doc.text('Nombre de cl\u00e9s attendues :', M, y);
+    doc.setFont('helvetica','normal');
+    if(state.cles.remises) doc.text(String(state.cles.remises), M+134, y);
+    dotted(M+128, y+3, 100);
+    doc.setFont('helvetica','bold');
+    doc.text('Nombre de cl\u00e9s rendues :', M+270, y);
+    doc.setFont('helvetica','normal');
+    if(state.cles.rendues) doc.text(String(state.cles.rendues), M+394, y);
+    dotted(M+388, y+3, 100);
+  }
   y += 18;
   const colsMob = (mode==='depart')
     ? [ {w:CW-192, t:'Mobilier / accessoire'}, {w:60, t:'QUANTIT\u00c9', isQty:true}, {w:66, t:'NEUF', k:0}, {w:66, t:'OCCASION', k:1} ]
