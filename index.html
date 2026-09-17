@@ -927,7 +927,10 @@ function hasOccasionFlag(){
 function updateDevisButtonVisibility(){
   const devisBtn = document.getElementById('devisBtn');
   if(!devisBtn) return;
-  devisBtn.style.display = (mode==='depart') ? (hasOccasionFlag() ? '' : 'none') : '';
+  // Départ : visible si une ligne est marquée Occasion.
+  // Retour : visible seulement si une casse / un dommage a été constaté.
+  const visible = (mode==='depart') ? hasOccasionFlag() : (state.casse.constat==='some');
+  devisBtn.style.display = visible ? '' : 'none';
 }
 
 function renderAll(){
