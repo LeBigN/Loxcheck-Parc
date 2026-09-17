@@ -232,7 +232,9 @@ footer.legal-footer{
 .devis-add select{flex:1 1 0; min-width:0; border:1px solid var(--line); border-radius:9px; padding:9px 8px; font-size:12.5px; background:#fff;}
 .mini-btn{border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:9px; padding:9px 12px; font-size:13px; font-weight:700;}
 .mini-btn.red{color:var(--red); border-color:var(--red);}
-.devis-total{text-align:right; font-size:16px; font-weight:800; margin-top:10px; padding:10px 4px; border-top:2px solid var(--red);}
+.devis-total{text-align:right; margin-top:10px; padding:10px 4px; border-top:2px solid var(--red);}
+.devis-total .row-ht{font-size:13px; color:var(--sub); font-weight:600; margin-bottom:2px;}
+.devis-total .row-ttc{font-size:16px; font-weight:800;}
 .btn-icon{flex:0 0 54px;}
 .btn .ico, .photo-btn .ico, .keys-title .ico{margin-right:5px;}
 .btn-icon .ico{margin-right:0;}
@@ -390,7 +392,6 @@ function ICON(name, size){
 
 <div class="sticky-footer">
   <button class="btn btn-danger-ghost btn-icon" id="resetBtn" title="Nouvelle fiche"></button>
-  <button class="btn btn-ghost btn-icon" id="saveBtn" title="Enregistrer"></button>
   <button class="btn btn-primary" id="pdfBtn"><span class="btn-lbl">Fiche</span></button>
   <button class="btn btn-ghost" id="devisBtn"><span class="btn-lbl">Fiche Devis</span></button>
 </div>
@@ -946,8 +947,6 @@ function renderAll(){
     main.append(renderDevisSection());
   }
   // Boutons du footer selon le mode : en Départ, ni disquette ni Fiche Devis
-  const saveBtn = document.getElementById('saveBtn');
-  if(saveBtn) saveBtn.style.display = (mode==='depart') ? 'none' : '';
   updateDevisButtonVisibility();
   main.append(el('footer',{class:'legal-footer'},
     'LOXAM MODULE – S.A.S.U. CAPITAL DE 487 500 € - SIÈGE SOCIAL : 276, RUE NICOLAS COATANLEM – 56850 CAUDAN – R.C.S. LORIENT B 433 911 948 – N° T.V.A : FR27 433 911 948 – NAF 7732Z'
@@ -1001,7 +1000,12 @@ function renderDevisSection(){
   c.append(addWrap);
 
   const totalSpan = el('span');
-  const updTotal = ()=>{ totalSpan.textContent = devisTotalHT().toFixed(2) + ' \u20ac HT'; };
+  const totalTtcSpan = el('span');
+  const updTotal = ()=>{
+    const ht = devisTotalHT();
+    totalSpan.textContent = ht.toFixed(2) + ' \u20ac HT';
+    totalTtcSpan.textContent = (ht*(1+TVA_RATE)).toFixed(2) + ' \u20ac TTC';
+  };
 
   if(state.devis.lignes.length){
     c.append(el('div',{class:'devis-cols'},
@@ -1031,12 +1035,16 @@ function renderDevisSection(){
     c.append(leg);
   }
 
-  const tot = el('div',{class:'devis-total'}, 'Total HT : ', totalSpan);
+  const tot = el('div',{class:'devis-total'},
+    el('div',{class:'row-ht'}, 'Total HT : ', totalSpan),
+    el('div',{class:'row-ttc'}, 'Total TTC (TVA 20%) : ', totalTtcSpan)
+  );
   updTotal();
   c.append(tot);
   return c;
 }
 
+const TVA_RATE = 0.20;
 function devisTotalHT(){
   return state.devis.lignes.reduce((s,l)=> s + (parseFloat(l.qty)||0)*(parseFloat(l.pu)||0), 0);
 }
@@ -1171,16 +1179,23 @@ async function generateDevisPDF(){
   doc.text('04 42 46 72 80', M, y+108);
   doc.text('accueilmarseille@loxam-module.com', M, y+120);
 
-  // Total HT — barre rouge + montant
-  const totY = Math.min(y + 96, 792);
+  // Totaux — HT et TVA en discret, TTC mis en avant (barre rouge)
+  const tva = total * TVA_RATE;
+  const ttc = total + tva;
+  const totY = Math.min(y + 96, 766);
+  setText(GRAYTXT); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+  doc.text('Total HT :', W-M-138, totY-20);
+  doc.text(total.toFixed(2)+' \u20ac', W-M-10, totY-20, {align:'right'});
+  doc.text('TVA (20%) :', W-M-138, totY-8);
+  doc.text(tva.toFixed(2)+' \u20ac', W-M-10, totY-8, {align:'right'});
   setFill(RED);
   doc.roundedRect(W-M-300, totY, 168, 26, 5, 5, 'F');
   doc.setFillColor(247,247,247); setDraw([210,210,210]); doc.setLineWidth(0.8);
   doc.roundedRect(W-M-128, totY, 128, 26, 5, 5, 'FD');
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(11);
-  doc.text('Total HT', W-M-292, totY+17);
+  doc.text('Total TTC', W-M-292, totY+17);
   setText(INK);
-  doc.text(total.toFixed(2)+'\u20acht', W-M-10, totY+17, {align:'right'});
+  doc.text(ttc.toFixed(2)+'\u20ac ttc', W-M-10, totY+17, {align:'right'});
 
   // Pied de page légal (identique sur tous les documents)
   setDraw(RED); doc.setLineWidth(0.8);
@@ -1568,11 +1583,9 @@ function openResetModal(){
 
 // Icônes des boutons du footer
 document.getElementById('resetBtn').innerHTML = ICON('trash', 20);
-document.getElementById('saveBtn').innerHTML = ICON('save', 20);
 document.querySelector('#pdfBtn .btn-lbl').insertAdjacentHTML('afterbegin', ICON('file'));
 document.querySelector('#devisBtn .btn-lbl').insertAdjacentHTML('afterbegin', ICON('receipt'));
 document.getElementById('resetBtn').addEventListener('click', openResetModal);
-document.getElementById('saveBtn').addEventListener('click', ()=>saveDraft(false));
 document.getElementById('pdfBtn').addEventListener('click', async ()=>{
   const btn = document.getElementById('pdfBtn');
   btn.innerHTML = ICON('spinner')+' Génération…';
