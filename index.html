@@ -489,6 +489,9 @@ function getChecklistSections(){
   return mode==='depart' ? CHECKLIST_SECTIONS_DEPART : CHECKLIST_SECTIONS_RETOUR;
 }
 
+// Départ : une seule ligne « Mobiliers » (Neuf / Occasion + photos) pour aller vite.
+const MOBILIER_ITEMS_DEPART = ['Mobiliers'];
+function getMobilierItems(){ return mode==='depart' ? MOBILIER_ITEMS_DEPART : MOBILIER_ITEMS; }
 const MOBILIER_ITEMS = ['Table(s)','Chaise(s)','Chaise(s) tissu','Armoire(s) vestiaire','Banc(s)','Armoire(s) bureau','Caisson(s)','Électroménager'];
 
 function todayISO(){
@@ -547,7 +550,7 @@ const state = {
 [...CHECKLIST_SECTIONS_RETOUR, ...CHECKLIST_SECTIONS_DEPART].forEach(s => s.items.forEach(i => {
   state.checklist[s.id+'|'+i] = { statuses:[], photos:[] };
 }));
-MOBILIER_ITEMS.forEach(i => { state.mobilier[i] = { qty:'', statuses:[], photos:[] }; });
+[...MOBILIER_ITEMS, ...MOBILIER_ITEMS_DEPART].forEach(i => { state.mobilier[i] = { qty:'', statuses:[], photos:[] }; });
 
 // Snapshot of the empty fiche, used to fully reset the form.
 const INITIAL_STATE = JSON.parse(JSON.stringify(state));
@@ -822,7 +825,7 @@ function renderClesSection(){
     (()=>{ const t=el('div',{class:'keys-title'}); t.innerHTML=ICON('key',15)+' Clés'; return t; })(),
     keysGrid
   ));
-  MOBILIER_ITEMS.forEach(i => c.append(renderChecklistItem(i, state.mobilier, true)));
+  getMobilierItems().forEach(i => c.append(renderChecklistItem(i, state.mobilier, mode!=='depart')));
   return c;
 }
 
@@ -936,7 +939,7 @@ function renderSignaturesSection(){
 // dommage/usure, et déclenche l'apparition du bouton Fiche Devis.
 function hasOccasionFlag(){
   return Object.values(state.checklist).some(it=> (it.statuses||[]).includes('occasion'))
-      || Object.values(state.mobilier).some(it=> (it.statuses||[]).includes('occasion'));
+      || getMobilierItems().some(i=> ((state.mobilier[i]||{}).statuses||[]).includes('occasion'));
 }
 function updateDevisButtonVisibility(){
   const devisBtn = document.getElementById('devisBtn');
@@ -973,7 +976,7 @@ function renderAll(){
 }
 
 function updateProgress(){
-  const all = Object.values(state.checklist).concat(Object.values(state.mobilier));
+  const all = getChecklistSections().flatMap(sec=> sec.items.map(i=> state.checklist[sec.id+'|'+i])).concat(getMobilierItems().map(i=> state.mobilier[i])).filter(Boolean);
   const done = all.filter(i=>i.statuses && i.statuses.length).length;
   const pct = Math.round((done/all.length)*100);
   document.getElementById('progressFill').style.width = pct+'%';
@@ -1075,7 +1078,7 @@ async function generateDevisPDF(){
     throw new Error('Ajoute au moins une ligne au devis (chapitre 6).');
   }
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const doc = new jsPDF({unit:'pt', format:'a4', compress:true});
   const W = doc.internal.pageSize.getWidth();
   const M = 48;
   const RED=[199,15,46], SAVBG=[252,242,245], SAVBORDER=[217,94,115],
@@ -1237,7 +1240,7 @@ async function generatePDF(){
     throw new Error("La librairie PDF ne s'est pas chargée. Ouvre la page via un serveur local ou une URL hébergée, pas en double-cliquant sur le fichier.");
   }
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const doc = new jsPDF({unit:'pt', format:'a4', compress:true});
   const W = doc.internal.pageSize.getWidth();
   const M = 48, CW = W - 2*M, MAXY = 778;
   // Palette reprise de la maquette PV
@@ -1445,10 +1448,10 @@ async function generatePDF(){
   }
   y += 18;
   const colsMob = (mode==='depart')
-    ? [ {w:CW-192, t:'Mobilier / accessoire'}, {w:60, t:'QUANTIT\u00c9', isQty:true}, {w:66, t:'NEUF', k:0}, {w:66, t:'OCCASION', k:1} ]
+    ? [ {w:CW-132, t:'Mobilier / accessoire'}, {w:66, t:'NEUF', k:0}, {w:66, t:'OCCASION', k:1} ]
     : [ {w:CW-192, t:'Mobilier / accessoire'}, {w:60, t:'QUANTIT\u00c9', isQty:true}, {w:66, smiley:true, k:0}, {w:66, smiley:false, k:1} ];
   // Seul le mobilier effectivement contrôlé (une case coché) est imprimé.
-  const mobRows = MOBILIER_ITEMS.filter(i=>{
+  const mobRows = getMobilierItems().filter(i=>{
     const it = state.mobilier[i];
     return it && Array.isArray(it.statuses) && it.statuses.length > 0;
   }).map(i=>{
@@ -1527,7 +1530,7 @@ async function generatePDF(){
     const it = state.checklist[sec.id+'|'+i];
     ((it && it.photos) || []).forEach(p=> annex.push([i, p]));
   }));
-  MOBILIER_ITEMS.forEach(i=>{
+  getMobilierItems().forEach(i=>{
     const it = state.mobilier[i];
     ((it && it.photos) || []).forEach(p=> annex.push([i, p]));
   });
