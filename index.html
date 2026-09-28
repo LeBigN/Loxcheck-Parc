@@ -468,7 +468,8 @@ const PRIX_SAV = [
 ];
 const DEVIS_AGENCE = { nom:'LOXAM Module PACA', adresse:"346 All. Henri Moissan, 13130 Berre-l'Étang", tel:'04 42 46 72 80' };
 
-const CHECKLIST_SECTIONS = [
+// Retour (restitution) : contrôle complet, 2 chapitres / 7 lignes.
+const CHECKLIST_SECTIONS_RETOUR = [
   { id:'proprete', num:'1', title:'1. Propreté des modules', items:[
     'Propreté intérieure','Propreté extérieure','Revetement de sols'
   ]},
@@ -476,6 +477,17 @@ const CHECKLIST_SECTIONS = [
     'Panneaux extérieurs','Panneaux intérieurs','Lames de plafond','Ossature'
   ]},
 ];
+// Départ (mise à disposition) : contrôle express, 1 chapitre / 3 lignes
+// pour aller à l'essentiel (les agents de parc sont sur le terrain).
+const CHECKLIST_SECTIONS_DEPART = [
+  { id:'general', num:'1', title:'1. État général', items:[
+    'Propreté','État extérieur','État intérieur'
+  ]},
+];
+// Sélectionne la structure de checklist active selon le mode courant.
+function getChecklistSections(){
+  return mode==='depart' ? CHECKLIST_SECTIONS_DEPART : CHECKLIST_SECTIONS_RETOUR;
+}
 
 const MOBILIER_ITEMS = ['Table(s)','Chaise(s)','Chaise(s) tissu','Armoire(s) vestiaire','Banc(s)','Armoire(s) bureau','Caisson(s)','Électroménager'];
 
@@ -530,7 +542,9 @@ const state = {
   }
 };
 
-CHECKLIST_SECTIONS.forEach(s => s.items.forEach(i => {
+// Initialise les clés pour les DEUX structures (Départ + Retour) afin que
+// chaque mode conserve son propre brouillon sans collision de clés.
+[...CHECKLIST_SECTIONS_RETOUR, ...CHECKLIST_SECTIONS_DEPART].forEach(s => s.items.forEach(i => {
   state.checklist[s.id+'|'+i] = { statuses:[], photos:[] };
 }));
 MOBILIER_ITEMS.forEach(i => { state.mobilier[i] = { qty:'', statuses:[], photos:[] }; });
@@ -789,7 +803,7 @@ function renderChecklistSection(def){
 
 function renderClesSection(){
   const c = el('section',{class:'card', id:'sec-cles'});
-  c.append(el('h2','3. Clés et mobilier'));
+  c.append(el('h2', (mode==='depart' ? '2' : '3')+'. Clés et mobilier'));
   // Départ (auto-contrôle avant mise à disposition) : une seule information à saisir,
   // le nombre de clés remises avec le module. Retour : les deux compteurs (attendues/rendues).
   const keysGrid = (mode==='depart')
@@ -905,7 +919,7 @@ function sigPad(sigObj){
 
 function renderSignaturesSection(){
   const c = el('section',{class:'card', id:'sec-signatures'});
-  c.append(el('h2','5. Signature'));
+  c.append(el('h2', (mode==='depart' ? '3' : '5')+'. Signature'));
   c.append(el('div',{style:'height:8px;'}));
   const cell = el('div',{class:'sig-cell'});
   cell.append(el('div',{class:'sig-label'},"Agent de parc ayant contrôlé le module — Nom / Visa"));
@@ -938,7 +952,7 @@ function renderAll(){
   const scrollY = window.scrollY;
   main.innerHTML = '';
   main.append(renderInfoSection());
-  CHECKLIST_SECTIONS.forEach(def => main.append(renderChecklistSection(def)));
+  getChecklistSections().forEach(def => main.append(renderChecklistSection(def)));
   main.append(renderClesSection());
   // Chapitre 4 (Casse) et 6 (Refacturation) : réservés au mode Retour
   if(mode==='retour'){
@@ -1396,23 +1410,20 @@ async function generatePDF(){
       return { name:i, checks: stKeys.map(k=> (it.statuses||[]).includes(k)) };
     });
   }
-  const rows1 = rowsFor(CHECKLIST_SECTIONS[0]);
-  if(rows1.length){
-    y = pill('1. Propret\u00e9 des modules', y);
-    y = statusTable(y, colsSmiley, rows1);
-    y += 8;
-  }
-  const rows2 = rowsFor(CHECKLIST_SECTIONS[1]);
-  if(rows2.length){
+  // D\u00e9part : 1 seul chapitre condens\u00e9 ("\u00c9tat g\u00e9n\u00e9ral").
+  // Retour : 2 chapitres d\u00e9taill\u00e9s (Propret\u00e9 / Panneaux et structure).
+  getChecklistSections().forEach(sec=>{
+    const rows = rowsFor(sec);
+    if(!rows.length) return;
     if(y + 90 > MAXY) y = newPage();
-    y = pill('2. \u00c9tat des panneaux et structure', y);
-    y = statusTable(y, colsSmiley, rows2);
+    y = pill(sec.title, y);
+    y = statusTable(y, colsSmiley, rows);
     y += 8;
-  }
+  });
 
-  // 3. Clés et mobilier
+  // Clés et mobilier (numéro de chapitre selon le mode)
   if(y + 120 > MAXY) y = newPage();
-  y = pill('3. Cl\u00e9s et mobilier', y);
+  y = pill((mode==='depart' ? '2' : '3')+'. Cl\u00e9s et mobilier', y);
   y += 2;
   doc.setFont('helvetica','bold'); doc.setFontSize(9.5); setText(INK);
   if(mode==='depart'){
@@ -1487,9 +1498,9 @@ async function generatePDF(){
     }
   }
 
-  // 5. Signature de l'agent de parc
+  // Signature de l'agent de parc (numéro de chapitre selon le mode)
   if(y + 92 > MAXY) y = newPage();
-  y = pill('5. Signature', y);
+  y = pill((mode==='depart' ? '3' : '5')+'. Signature', y);
   const s = state.signatures.agent;
   const headH = 17, bodyH = 48;
   setFill(SIGBAND); setDraw(BORDER); doc.setLineWidth(0.9);
@@ -1512,7 +1523,7 @@ async function generatePDF(){
   // Annexe photos (n° de module, lignes, casse)
   const annex = [];
   (state.photosModule || []).forEach(p=> annex.push(['N\u00b0 du module', p]));
-  CHECKLIST_SECTIONS.forEach(sec=> sec.items.forEach(i=>{
+  getChecklistSections().forEach(sec=> sec.items.forEach(i=>{
     const it = state.checklist[sec.id+'|'+i];
     ((it && it.photos) || []).forEach(p=> annex.push([i, p]));
   }));
