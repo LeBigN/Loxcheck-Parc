@@ -454,7 +454,14 @@ const PRIX_SAV = [
   {cat:'Plomberie – Sanitaire', items:[
     ['Chauffe-eau 15 litres',368], ['Chauffe-eau 300 litres',954], ['Limiteur de pression',103],
     ['Robinet mélangeur douche',267], ['Robinet mélangeur lavabo / évier',229], ['Ventilation mécanique VMC',374],
-    ['Rideau de douche',53], ['Flexible et pomme de douche',65], ['Abattant WC',46]
+    ['Rideau de douche',53], ['Flexible et pomme de douche',65], ['Abattant WC',46],
+    ['Kit meuble évier',980]
+  ]},
+  {cat:'Mobilier', items:[
+    ['Armoire de bureau',177.71], ['Armoire vestiaire double',140.95], ['Banc',36.00],
+    ['Bureau',145.54], ['Caisson de bureau',107.00], ['Chaise coquille',13.54],
+    ['Chaise dactylo',65.58], ['Chaise visiteur',25.44], ['Fauteuil',99.00],
+    ['Plateau de table',39.63], ['Réfrigérateur',167.55]
   ]},
   {cat:'Climatisation / Chauffage', items:[
     ['Trappe clim',241], ['Remplacement climatiseur 2600 W',742], ['Remplacement pompe à chaleur 2000 W',1036],
@@ -1006,7 +1013,7 @@ function renderDevisSection(){
   sel.append(el('option',{value:''},'\u2014 Refacturation \u2014'));
   PRIX_SAV.forEach((grp,gi)=>{
     const og = el('optgroup',{label:grp.cat});
-    grp.items.forEach((it,ii)=> og.append(el('option',{value:gi+'|'+ii}, it[0]+' \u2014 '+it[1]+' \u20ac')));
+    grp.items.forEach((it,ii)=> og.append(el('option',{value:gi+'|'+ii}, it[0]+' \u2014 '+(it[1]%1===0?String(it[1]):it[1].toFixed(2).replace('.',','))+' \u20ac')));
     sel.append(og);
   });
   const addBtn = el('button',{class:'mini-btn red', onclick:()=>{
