@@ -364,6 +364,7 @@ function ICON(name, size){
   <div class="home-inner">
     <div class="home-title">Fiche de contrôle module</div>
     <div class="home-sub">Choisir le type de fiche</div>
+    <div class="home-sub" style="font-size:11px; opacity:.6; margin-top:4px;">Version 44</div>
     <div class="home-cards">
       <div class="home-card" id="btnDepart">
         <div class="home-ico" id="homeIcoDepart"></div>
@@ -1680,7 +1681,12 @@ document.getElementById('homeBtn').addEventListener('click', retourAccueil);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').then(reg => {
+    // updateViaCache:'none' : le navigateur ne réutilise jamais une ancienne copie du service worker
+    navigator.serviceWorker.register('service-worker.js', {updateViaCache:'none'}).then(reg => {
+      // Mise à jour forcée : vérification immédiate, puis à chaque retour sur l'appli / retour du réseau
+      reg.update().catch(()=>{});
+      document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') reg.update().catch(()=>{}); });
+      window.addEventListener('online', ()=> reg.update().catch(()=>{}));
       // Première installation : confirme que l'appli est téléchargée pour le hors ligne
       if (reg.installing) {
         reg.installing.addEventListener('statechange', function(){
@@ -1693,12 +1699,22 @@ if ('serviceWorker' in navigator) {
         if (!nw) return;
         nw.addEventListener('statechange', () => {
           if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-            showToast('Mise à jour téléchargée — fermer et rouvrir l\'appli pour l\'appliquer');
+            showToast('Mise à jour en cours…'); // le rechargement automatique suit (controllerchange)
           }
         });
       });
     }).catch(()=>{});
   });
+  // Nouvelle version active : brouillon sauvegardé puis rechargement automatique de la page
+  let _reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', async ()=>{
+    if(_reloaded || !navigator.serviceWorker) return;
+    if(!window.__swHadController) return; // première installation : pas de rechargement
+    _reloaded = true;
+    try{ await saveDraft(true); }catch(e){}
+    location.reload();
+  });
+  window.__swHadController = !!navigator.serviceWorker.controller;
   // Indicateur de connexion : la fiche reste enregistrée sur l'appareil dans tous les cas
   window.addEventListener('offline', ()=> showToast('Mode hors ligne — la fiche reste enregistrée sur l\'appareil'));
   window.addEventListener('online',  ()=> showToast('Connexion rétablie'));
